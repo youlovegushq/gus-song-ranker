@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Song Ranker</title>
+
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      text-align: center;
+      background: #f7f1e3; /* cream */
+      color: #2b2b2b;
+      padding: 60px 20px;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    button {
+  font-size: 20px;
+  padding: 18px;
+  margin: 15px auto;
+  width: 280px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  background: #f7b6c8;
+  color: #2b2b2b;
+  transition: opacity 0.25s ease, transform 0.2s ease;
+  display: block;
+}
+.fade-out {
+  opacity: 0;
+}
+      display: block;
+    }
+
+    button:hover {
+      background: #f49bb4;
+      transform: scale(1.05);
+    }
+
+    #results {
+      margin-top: 50px;
+    }
+
+    #finalList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+      align-items: center;
+    }
+
+    #finalList p {
+      background: #fffaf5;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 18px;
+      margin: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      width: 280px;
+    }
+
+#restartBtn {
+  margin-top: 25px;
+  background: #ffffff;       /* white instead of pink */
+  color: #2b2b2b;
+  border: 2px solid #f7b6c8; /* soft pink border */
+}
+
+#restartBtn:hover {
+  background: #f7f1e3;       /* cream hover */
+  transform: scale(1.05);
+}
+
+button {
+  transition: opacity 0.2s ease, transform 0.2s;
+}
+
+.fade-out {
+  opacity: 0;
+}
+  </style>
+</head>
+
+<body>
+
+  <h1>pick your favorite</h1>
+
+  <button id="songA"></button>
+  <button id="songB"></button>
+<button id="restartBtn" style="margin-top:20px;">restart</button>
+
+  <!-- FINAL RESULTS SCREEN -->
+  <div id="results" style="display:none;">
+    <h2>Final Ranking</h2>
+    <div id="finalList"></div>
+  </div>
+
+  <script>
+
+    // =====================
+    // SONG DATA
+    // =====================
+    const songs = [
+      { title: "bent & broken", rating: 1000 },
+      { title: "bigger rush", rating: 1000 },
+      { title: "the difference", rating: 1000 },
+      { title: "party", rating: 1000 },
+      { title: "i got plans", rating: 1000 },
+      { title: "miss you", rating: 1000 },
+      { title: "l.o.v.e.", rating: 1000 },
+      { title: "dancing alone", rating: 1000 },
+      { title: "19", rating: 1000 },
+      { title: "lies", rating: 1000 },
+      { title: "humid summer", rating: 1000 },
+      { title: "cloudbathing", rating: 1000 },
+      { title: "hurricane", rating: 1000 },
+      { title: "one more night", rating: 1000 },
+      { title: "stoned", rating: 1000 },
+      { title: "pluto", rating: 1000 },
+      { title: "cut the kite string", rating: 1000 },
+      { title: "big things small seeds", rating: 1000 },
+      { title: "the rim fire", rating: 1000 },
+      { title: "pump my tires", rating: 1000 },
+      { title: "slips away", rating: 1000 },
+      { title: "taller than the trees", rating: 1000 },
+      { title: "i don't kill", rating: 1000 },
+      { title: "heat island effect", rating: 1000 },
+      { title: "no more freedom", rating: 1000 },
+      { title: "i think we're worth saving", rating: 1000 },
+      { title: "don't", rating: 1000 },
+      { title: "do you miss me", rating: 1000 },
+      { title: "not losing sleep", rating: 1000 },
+      { title: "former future star", rating: 1000 },
+      { title: "hands on me", rating: 1000 },
+      { title: "same life", rating: 1000 },
+      { title: "vivian", rating: 1000 }
+    ];
+
+    // =====================
+    // STATE
+    // =====================
+    let currentA, currentB;
+    let comparisons = 0;
+    const maxComparisons = 200;
+
+    const seenPairs = new Set();
+
+    // =====================
+    // RANDOM PAIR PICKER
+    // =====================
+    function getRandomSongs() {
+      let indexA, indexB, pairKey;
+
+      do {
+        indexA = Math.floor(Math.random() * songs.length);
+        indexB = Math.floor(Math.random() * songs.length);
+      } while (indexA === indexB);
+
+      pairKey = [indexA, indexB].sort().join("-");
+
+      let attempts = 0;
+      while (seenPairs.has(pairKey) && attempts < 50) {
+        indexA = Math.floor(Math.random() * songs.length);
+        indexB = Math.floor(Math.random() * songs.length);
+
+        while (indexA === indexB) {
+          indexB = Math.floor(Math.random() * songs.length);
+        }
+
+        pairKey = [indexA, indexB].sort().join("-");
+        attempts++;
+      }
+
+      seenPairs.add(pairKey);
+
+      currentA = songs[indexA];
+      currentB = songs[indexB];
+
+      const btnA = document.getElementById("songA");
+const btnB = document.getElementById("songB");
+
+// fade out
+btnA.classList.add("fade-out");
+btnB.classList.add("fade-out");
+
+setTimeout(() => {
+  btnA.innerText = currentA.title;
+  btnB.innerText = currentB.title;
+
+  // force reflow (important for smooth animation)
+  void btnA.offsetWidth;
+
+  // fade in
+  btnA.classList.remove("fade-out");
+  btnB.classList.remove("fade-out");
+}, 200);}
+
+    // =====================
+    // ELO SYSTEM
+    // =====================
+    function updateElo(winner, loser) {
+      const K = 32;
+
+      const expectedWinner =
+        1 / (1 + Math.pow(10, (loser.rating - winner.rating) / 400));
+
+      const expectedLoser =
+        1 / (1 + Math.pow(10, (winner.rating - loser.rating) / 400));
+
+      winner.rating = winner.rating + K * (1 - expectedWinner);
+      loser.rating = loser.rating + K * (0 - expectedLoser);
+    }
+
+    // =====================
+    // FINISH SCREEN
+    // =====================
+    function checkFinish() {
+      if (comparisons >= maxComparisons) {
+        const sorted = [...songs].sort((a, b) => b.rating - a.rating);
+
+        const results = document.getElementById("results");
+        const finalList = document.getElementById("finalList");
+
+        finalList.innerHTML = sorted
+  .map((song, index) => `<p>${index + 1}. ${song.title}</p>`)
+  .join("");
+
+        results.style.display = "block";
+
+        document.getElementById("songA").style.display = "none";
+        document.getElementById("songB").style.display = "none";
+      }
+    }
+
+    // =====================
+    // CLICK HANDLERS
+    // =====================
+    document.getElementById("songA").onclick = () => {
+      updateElo(currentA, currentB);
+      comparisons++;
+      checkFinish();
+      getRandomSongs();
+    };
+
+    document.getElementById("songB").onclick = () => {
+      updateElo(currentB, currentA);
+      comparisons++;
+      checkFinish();
+      getRandomSongs();
+    };
+
+    // =====================
+    // START
+    // =====================
+    getRandomSongs();
+document.getElementById("restartBtn").onclick = () => {
+  // reset ratings
+  songs.forEach(song => song.rating = 1000);
+
+  // reset state
+  comparisons = 0;
+  seenPairs.clear();
+
+  // reset UI
+  document.getElementById("results").style.display = "none";
+  document.getElementById("songA").style.display = "block";
+  document.getElementById("songB").style.display = "block";
+
+  // start again
+  getRandomSongs();
+};
+
+  </script>
+
+</body>
+</html>
